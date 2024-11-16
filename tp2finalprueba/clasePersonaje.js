@@ -2,13 +2,14 @@ class Personaje {
   constructor() {
     this.x = width / 2;
     this.y = height - 70;
-    this.tam = 50;
+    this.tam = 80;
+    this.image = loadImage ("data/gusano.png");
+
   }
 
   mostrar() {
-    image (imgPersonaje, this.x, this.y, this.tam, this.tam);
-   // fill(0, 0, 255);
-   // rect(this.x, this.y, this.tam, 10);
+    image (this.image, this.x, this.y, this.tam, this.tam);
+  
   }
 
   mover() {

@@ -6,8 +6,8 @@ class Objeto {
     this.velocidad = random(2, 5);
     this.bueno = random(1) > 0.5; // 50% buenos, 50% malos
     this.imagen = this.bueno
-    ? random ([imgBuena1, imgBuena2, imgBuena3, imgBuena4])
-    : random ([imgMala1, imgMala2, imgMala3 ]);
+    ? loadImage (random (["data/velasoscuras.png","data/pasteloscuro.png", "data/veneno.png","data/pianoviejo.png"]))
+    : loadImage (random (["data/pastelrosa.png","data/pianorosa.png", "data/velasclaras.png" ]));
   }
 
   mostrar() {
