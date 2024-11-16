@@ -1,42 +1,23 @@
 class Personaje {
   constructor() {
     this.x = width / 2;
-    this.y = height - 30;
-    this.vidas = 3;
-    this.puntos = 0;
-    this.velocidad = 5;
-    this.ancho = 50;
-    this.alto = 20;
+    this.y = height - 70;
+    this.tam = 50;
   }
 
   mostrar() {
-    fill(0, 0, 255);
-    rect(this.x, this.y, this.ancho, this.alto);
+    image (imgPersonaje, this.x, this.y, this.tam, this.tam);
+   // fill(0, 0, 255);
+   // rect(this.x, this.y, this.tam, 10);
   }
 
   mover() {
     if (keyIsDown(LEFT_ARROW)) {
-      this.x = max(0, this.x - this.velocidad);
+      this.x -= 5;
     }
     if (keyIsDown(RIGHT_ARROW)) {
-      this.x = min(width - this.ancho, this.x + this.velocidad);
+      this.x += 5;
     }
-  }
-
-  verificarColision(objeto) {
-    if (
-      this.x < objeto.x + objeto.tamano &&
-      this.x + this.ancho > objeto.x &&
-      this.y < objeto.y + objeto.tamano &&
-      this.y + this.alto > objeto.y
-    ) {
-      if (objeto.tipo === "bueno") {
-        this.puntos++;
-      } else {
-        this.vidas--;
-      }
-      return true;
-    }
-    return false;
+    this.x = constrain(this.x, 0, width - this.tam);
   }
 }

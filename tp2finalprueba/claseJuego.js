@@ -1,168 +1,138 @@
+
 class Juego {
   constructor() {
+    this.estado = "inicio"; // Puede ser 'inicio', 'jugando', 'fin', 'ganaste' o 'creditos'
     this.personaje = new Personaje();
     this.objetos = [];
-    this.tiempoTotal = 30;
-    this.tiempoRestante = this.tiempoTotal;
-    this.ultimoTiempo = millis();
-    this.jugando = false;
-    this.mostrandoCreditos = false;
+    this.vidas = 3;
+    this.puntaje = 0;
+    this.tiempo = 30; // Temporizador en segundos
+    this.tiempoInicio = 0;
+    this.botonInicio = new Boton(width / 2 - 50, height / 2 - 20, 100, 40, "Jugar");
+    this.botonCreditos = new Boton(width / 2 - 50, height / 2 + 40, 100, 40, "Créditos");
+    this.botonReiniciar = new Boton(width / 2 - 50, height / 2 + 40, 100, 40, "Reiniciar");
+    this.botonVolver = new Boton(width / 2 - 50, height - 60, 100, 40, "Volver");
+    this.botonInicioDesdeFin = new Boton(width / 2 - 50, height / 2 + 90, 100, 40, "Inicio");
 
-    // Botones adaptados
-    this.botonInicio = new Boton(width / 2 - 75, height / 2 - 30, 150, 40, "Iniciar Juego", () => {
-      this.iniciarJuego();
-    }
-    );
-
-    this.botonReiniciar = new Boton(width / 2 - 75, height / 2 + 20, 150, 40, "Reiniciar", () => {
-      this.reiniciarJuego();
-    }
-    );
-
-    this.botonCreditos = new Boton(width / 2 - 75, height / 2 + 70, 160, 40, "Instrucciones/Créditos", () => {
-      this.mostrandoCreditos = true;
-    }
-    );
-
-    this.botonVolver = new Boton(width / 2 - 75, height - 60, 150, 40, "Volver", () => {
-      this.mostrarPantallaInicio();
-    }
-    );
   }
 
-  iniciarJuego() {
-    this.jugando = true;
-    this.personaje = new Personaje();
+  iniciar() {
+    this.estado = "jugando";
+    this.vidas = 3;
+    this.puntaje = 0;
     this.objetos = [];
-    this.tiempoRestante = this.tiempoTotal;
-    this.mostrandoCreditos = false;
+    this.tiempoInicio = millis(); // Guardamos el tiempo de inicio
   }
 
-  reiniciarJuego() {
-    this.jugando = true;
-    this.personaje = new Personaje();
-    this.objetos = [];
-    this.tiempoRestante = this.tiempoTotal;
-  }
-
-  generarObjetos() {
-    if (frameCount % 30 === 0) {
-      let tipo = random () > 0.5 ? "bueno" : "malo";
-
-      this.objetos.push(new Objeto(random(width), -50, random(3, 6), tipo));
+  mostrar() {
+    if (this.estado === "inicio") {
+      this.pantallaInicio();
+    } else if (this.estado === "jugando") {
+      this.jugar();
+    } else if (this.estado === "fin") {
+      this.pantallaFin();
+    } else if (this.estado === "ganaste") {
+      this.pantallaGanaste();
+    } else if (this.estado === "creditos") {
+      this.pantallaCreditos();
     }
   }
 
-  actualizar() {
-    if (this.jugando) {
-      let tiempoActual = millis();
-      if (tiempoActual - this.ultimoTiempo >= 1000) {
-        this.tiempoRestante--;
-        this.ultimoTiempo = tiempoActual;
+ verificarClick(mx, my) {
+    if (this.estado === "inicio") {
+      if (this.botonInicio.estaSobre(mx, my)) {
+        this.iniciar();
+      } else if (this.botonCreditos.estaSobre(mx, my)) {
+        this.estado = "creditos";
       }
-
-      if (this.tiempoRestante <= 0) {
-        this.jugando = false;
+    } else if (this.estado === "fin" || this.estado === "ganaste") {
+      if (this.botonReiniciar.estaSobre(mx, my)) {
+        this.iniciar();
+      } else if (this.botonInicioDesdeFin.estaSobre(mx, my)) {
+        this.estado = "inicio";
       }
+    } else if (this.estado === "creditos" && this.botonVolver.estaSobre(mx, my)) {
+      this.estado = "inicio";
+    }
+  }
+
+  pantallaInicio() {
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    fill(200);
+    text("¡Atrapa los objetos buenos!", width / 2, height / 2 - 80);
+    this.botonInicio.mostrar();
+    this.botonCreditos.mostrar();
+     
+ 
+  }
+
+  pantallaCreditos() {
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    fill(200);
+    text("Juego creado por Sofía Brizuela y Ada Rojas.", width/ 2, height / 2 - 40);
+    this.botonVolver.mostrar();
+  }
+
+  jugar() {
+    this.personaje.mostrar();
+    this.personaje.mover();
+
+    // Crear objetos periódicamente
+    if (frameCount % 60 === 0) {
+      this.objetos.push(new Objeto());
     }
 
+    // Mostrar y mover objetos
     for (let i = this.objetos.length - 1; i >= 0; i--) {
       this.objetos[i].mostrar();
       this.objetos[i].mover();
 
-      if (this.personaje.verificarColision(this.objetos[i])) {
+      // Verificar colisiones
+      if (this.objetos[i].toca(this.personaje)) {
+        if (this.objetos[i].bueno) {
+          this.puntaje++;
+        } else {
+          this.vidas--;
+        }
         this.objetos.splice(i, 1);
-      }
-
-      if (this.objetos[i] && this.objetos[i].fueraDePantalla()) {
+      } else if (this.objetos[i].fueraDePantalla()) {
         this.objetos.splice(i, 1);
       }
     }
 
-    this.personaje.mostrar();
-    this.personaje.mover();
-    this.mostrarHUD();
-
-    if (this.personaje.vidas <= 0) {
-      this.jugando = false;
-    }
-  }
-
-  mostrarHUD() {
-    fill(0);
+    // Mostrar puntaje, vidas y tiempo restante
+    let tiempoRestante = this.tiempo - int((millis() - this.tiempoInicio) / 1000);
+    fill(200);
     textSize(16);
-  text(`Vidas:
-    $ {
-      this.personaje.vidas
+    text(`Puntaje: ${this.puntaje}`, 50, 20);
+    text(`Vidas: ${this.vidas}`, width - 50, 20);
+    text(`Tiempo: ${tiempoRestante}s`, width / 2, 20);
+
+    // Verificar si pierde o gana
+    if (this.vidas <= 0) {
+      this.estado = "fin";
+    } else if (tiempoRestante <= 0) {
+      this.estado = "ganaste";
     }
-    `, 10, 20);
-  text(`Puntos:
-    $ {
-      this.personaje.puntos
-    }
-    `, 10, 40);
-  text(`Tiempo:
-    $ {
-      this.tiempoRestante
-    }
-    s`, 10, 60);
   }
 
-  mostrarFinDelJuego() {
+  pantallaFin() {
     textAlign(CENTER, CENTER);
-    textSize(32);
-    fill(0);
-    if (this.personaje.vidas <= 0) {
-      text("¡Perdiste!", width / 2, height / 2);
-    } else if (this.tiempoRestante <= 0 && this.personaje.puntos > 0) {
-      text("¡Ganaste!", width / 2, height / 2 -15);
-      textSize(24)
-        text("Puntos: " + this.personaje.puntos, width / 2, height / 2 + 10);
-    } else {
-      text("¡Tiempo agotado!", width / 2, height / 2);
-    }
+    textSize(20);
+    fill(200);
+    text(`Perdiste. Puntaje: ${this.puntaje}`, width / 2, height / 2 - 20);
     this.botonReiniciar.mostrar();
-    this.botonVolver.mostrar();
+    this.botonInicioDesdeFin.mostrar();
   }
 
-  mostrarPantallaInicio() {
+  pantallaGanaste() {
     textAlign(CENTER, CENTER);
-    textSize(32);
-    fill(0);
-    text("¡Bienvenido al Juego!", width / 2, height / 3);
-    this.botonInicio.mostrar();
-    this.botonCreditos.mostrar();
-  }
-
-  mostrarCreditos() {
-    textAlign(CENTER, CENTER);
-    textSize(24);
-    fill(0);
-    text("Instruccionesy Créditos del Juego", width / 2, height / 4);
-    textSize(16);
-    text("Desarrollado por: Tu Nombre", width / 2, height / 3);
-    text("Música por: Alguien", width / 2, height / 2);
-    text("Recoge el pastel adecuado para la boda controlando la bandeja con las flechas", width / 2, height * 2/ 3);
-
-    text("Gracias por jugar", width / 2, height * 2/3+40);
-
-    this.botonVolver.mostrar();
-  }
-
-  clic(mx, my) {
-    if (!this.jugando) {
-      this.botonInicio.clic(mx, my);
-      this.botonReiniciar.clic(mx, my);
-      this.botonCreditos.clic(mx, my);
-      this.botonVolver.clic(mx, my);
-      this.botonVolver.clic(mx, my);
-    } else if (this.jugando && this.personaje.vidas > 0 && this.tiempoRestante > 0 ) {
-      //if (this.jugando === false) {
-      this.botonInicio.clic(mx, my);
-
-      this.botonReiniciar.clic(mx, my);
-      this.botonCreditos.clic(mx, my);
-      this.botonVolver.clic(mx, my);
-    }
+    textSize(20);
+    fill(200);
+    text(`¡Ganaste! Puntaje: ${this.puntaje}`, width / 2, height / 2 - 20);
+    this.botonReiniciar.mostrar();
+    this.botonInicioDesdeFin.mostrar();
   }
 }
